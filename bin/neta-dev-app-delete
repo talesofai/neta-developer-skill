@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app delete — DELETE /v1/developer/apps/{uuid}
+#
+# Usage:
+#   neta-dev-app delete <uuid> [--force]
+#
+# Options:
+#   --force   Skip confirmation prompt
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/neta-dev-lib.sh"
+
+UUID=""
+FORCE=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --force) FORCE=true; shift ;;
+        --help|-h)
+            sed -n '/^# Usage:/,/^# Options:/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+            exit 0
+            ;;
+        -*)
+            die "unknown flag: $1"
+            ;;
+        *)
+            if [[ -z "$UUID" ]]; then
+                UUID="$1"
+                shift
+            else
+                die "unexpected argument: $1"
+            fi
+            ;;
+    esac
+done
+
+[[ -n "$UUID" ]] || die "uuid is required. Usage: neta-dev-app delete <uuid> [--force]"
+
+require_env DEV_TOKEN
+
+if [[ "$FORCE" != true ]]; then
+    read -r -p "Delete app $UUID? [y/N] " confirm
+    [[ "$confirm" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+fi
+
+echo "Deleting app $UUID..."
+api_call DELETE "/v1/developer/apps/$UUID" > /dev/null
+echo "Deleted."

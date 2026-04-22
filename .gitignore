@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude Code local settings
+.claude/
+
+# Local env files (never commit secrets)
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Node artifacts
+node_modules/
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.local
+

@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; connect-src 'self' https://api.talesofai.com https://litellm.talesofai.com https://auth.neta.art; img-src 'self' https://oss.talesofai.com https://oss.talesofai.cn https://cdn.talesofai.com data:; media-src 'self' https://oss.talesofai.com https://oss.talesofai.cn https://cdn.talesofai.com; base-uri 'self'; form-action 'self';" />
+  <title>Neta Open Platform Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+
+  <!-- ── LOGIN SCREEN ──────────────────────────────────────────────────────── -->
+  <div id="screen-login" class="flex min-h-screen items-center justify-center">
+    <div class="bg-gray-900 rounded-2xl p-10 shadow-xl text-center max-w-sm w-full">
+      <div class="text-5xl mb-4">✨</div>
+      <h1 class="text-2xl font-bold mb-1">Neta</h1>
+      <p class="text-gray-400 text-sm mb-8">Open Platform Demo</p>
+      <button id="btn-login"
+        class="w-full bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-3 px-6 rounded-xl transition">
+        Connect with Neta
+      </button>
+    </div>
+  </div>
+
+  <!-- ── APP SHELL ─────────────────────────────────────────────────────────── -->
+  <div id="screen-app" class="hidden flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="border-b border-gray-800 px-6 py-4 flex items-center justify-between shrink-0">
+      <span class="font-bold text-lg">✨ Neta Demo</span>
+      <button id="btn-signout"
+        class="text-sm text-gray-400 hover:text-white transition">
+        Sign out
+      </button>
+    </header>
+
+    <!-- Tab bar -->
+    <nav class="flex border-b border-gray-800 px-6 shrink-0 overflow-x-auto">
+      <button data-tab="user"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">User</button>
+      <button data-tab="characters"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Characters</button>
+      <button data-tab="elementums"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Elementums</button>
+      <button data-tab="make-image"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Make Image</button>
+      <button data-tab="make-video"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Make Video</button>
+      <button data-tab="make-song"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Make Song</button>
+
+      <button data-tab="travel-campaign"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">Campaign</button>
+      <button data-tab="llm"
+        class="tab-btn py-3 px-4 text-sm font-medium border-b-2 border-transparent text-gray-400 transition whitespace-nowrap">LLM Chat</button>
+    </nav>
+
+    <!-- Content -->
+    <main class="flex-1 p-6 max-w-4xl mx-auto w-full">
+
+      <!-- ── USER TAB ────────────────────────────────────────────────────────── -->
+      <section id="tab-user" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="user">ⓘ</button></div>
+        <div id="user-loading" class="text-gray-500 text-sm">Loading…</div>
+        <div id="user-content" class="hidden space-y-6">
+          <div class="bg-gray-900 rounded-2xl p-6 flex items-center gap-6">
+            <img id="user-avatar" alt="avatar" class="w-20 h-20 rounded-full object-cover bg-gray-800 shrink-0" />
+            <div class="min-w-0">
+              <div id="user-name" class="text-2xl font-semibold truncate"></div>
+              <div class="text-xs text-gray-500 mt-2 mb-1 uppercase tracking-wide">AP Balance</div>
+              <div class="flex items-center gap-3">
+                <div class="w-48 h-2 bg-gray-800 rounded-full overflow-hidden">
+                  <div id="ap-bar" class="h-full bg-violet-500 rounded-full transition-all duration-500"></div>
+                </div>
+                <span id="ap-text" class="text-xs text-gray-400"></span>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-900 rounded-2xl p-6">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">AP Info</h3>
+            <pre id="ap-info-raw" class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 overflow-auto max-h-48"></pre>
+          </div>
+          <div class="bg-gray-900 rounded-2xl p-6">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">AP Delta History</h3>
+            <div id="ap-delta-loading" class="text-gray-500 text-xs">Loading…</div>
+            <div id="ap-delta-empty" class="hidden text-gray-500 text-xs">No history found.</div>
+            <table id="ap-delta-table" class="hidden w-full text-xs text-left">
+              <thead class="text-gray-500 border-b border-gray-800"><tr><th class="py-2">Type</th><th class="py-2">Amount</th><th class="py-2">Time</th></tr></thead>
+              <tbody id="ap-delta-body" class="text-gray-300"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── CHARACTERS TAB ──────────────────────────────────────────────────── -->
+      <section id="tab-characters" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="characters">ⓘ</button></div>
+        <div class="space-y-6">
+          <!-- Search -->
+          <div class="flex gap-3">
+            <input id="char-search" type="text" placeholder="Search characters…" class="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+            <button id="btn-char-search" class="bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition">Search</button>
+            <button id="btn-char-search-clear" class="text-gray-500 hover:text-white text-sm py-2 px-3 transition">Clear</button>
+          </div>
+          <!-- Create form -->
+          <div class="bg-gray-900 rounded-2xl p-6 max-w-xl">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">Create Character</h3>
+            <div class="space-y-3">
+              <input id="char-name" type="text" placeholder="Name" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="char-desc" type="text" placeholder="Description" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="char-prompt" type="text" placeholder="Generation prompt" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="char-trigger" type="text" placeholder="Trigger (identity prompt)" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <div class="flex gap-3">
+                <input id="char-avatar-uuid" type="text" placeholder="Avatar artifact UUID" class="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+                <button id="btn-pick-char-avatar" class="bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition">Pick</button>
+              </div>
+              <div id="char-avatar-picker" class="hidden grid grid-cols-4 gap-2 max-h-40 overflow-y-auto"></div>
+              <button id="btn-create-char" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-2 px-6 rounded-xl transition text-sm">Create</button>
+              <div id="char-status" class="hidden text-sm text-red-400"></div>
+            </div>
+          </div>
+          <!-- List -->
+          <div>
+            <h3 id="chars-heading" class="text-sm font-semibold text-gray-300 mb-3">My Characters</h3>
+            <div id="chars-loading" class="text-gray-500 text-xs">Loading…</div>
+            <div id="chars-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+            <button id="btn-chars-more" class="hidden mt-4 w-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white py-2 rounded-xl text-sm transition">Load more</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── ELEMENTUMS TAB ──────────────────────────────────────────────────── -->
+      <section id="tab-elementums" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="elementums">ⓘ</button></div>
+        <div class="space-y-6">
+          <!-- Search -->
+          <div class="flex gap-3">
+            <input id="elem-search" type="text" placeholder="Search elementums…" class="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+            <button id="btn-elem-search" class="bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition">Search</button>
+            <button id="btn-elem-search-clear" class="text-gray-500 hover:text-white text-sm py-2 px-3 transition">Clear</button>
+          </div>
+          <!-- Create form -->
+          <div class="bg-gray-900 rounded-2xl p-6 max-w-xl">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">Create Elementum</h3>
+            <div class="space-y-3">
+              <input id="elem-name" type="text" placeholder="Name" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="elem-desc" type="text" placeholder="Description" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="elem-prompt" type="text" placeholder="Style prompt" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <div class="flex gap-3">
+                <input id="elem-artifact-uuid" type="text" placeholder="Preview artifact UUID" class="flex-1 bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+                <button id="btn-pick-elem-artifact" class="bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium py-2 px-3 rounded-lg transition">Pick</button>
+              </div>
+              <div id="elem-artifact-picker" class="hidden grid grid-cols-4 gap-2 max-h-40 overflow-y-auto"></div>
+              <button id="btn-create-elem" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-2 px-6 rounded-xl transition text-sm">Create</button>
+              <div id="elem-status" class="hidden text-sm text-red-400"></div>
+            </div>
+          </div>
+          <!-- List -->
+          <div>
+            <h3 id="elems-heading" class="text-sm font-semibold text-gray-300 mb-3">My Elementums</h3>
+            <div id="elems-loading" class="text-gray-500 text-xs">Loading…</div>
+            <div id="elems-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+            <button id="btn-elems-more" class="hidden mt-4 w-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white py-2 rounded-xl text-sm transition">Load more</button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ── MAKE IMAGE TAB ──────────────────────────────────────────────────── -->
+      <section id="tab-make-image" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="make-image">ⓘ</button></div>
+        <div class="max-w-xl space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Prompt</label>
+            <textarea id="img-prompt" rows="3" placeholder="a serene lake under a starry sky…"
+              class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+          </div>
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="block text-xs text-gray-500 mb-1">Width</label>
+              <input id="img-width" type="number" value="512" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs text-gray-500 mb-1">Height</label>
+              <input id="img-height" type="number" value="512" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Model Series</label>
+            <select id="img-model" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500">
+              <option value="3_noobxl">3_noobxl</option>
+              <option value="netaxl">netaxl</option>
+              <option value="lumina">lumina</option>
+            </select>
+          </div>
+          <button id="btn-make-image" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-xl transition">Generate Image</button>
+          <div id="image-status" class="hidden text-sm text-red-400"></div>
+          <div id="image-spinner" class="hidden flex items-center gap-3 text-sm text-gray-400">
+            <svg class="animate-spin h-5 w-5 text-violet-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+            <span id="image-spinner-text">Generating…</span>
+          </div>
+          <img id="image-result" alt="generated image" class="hidden mt-4 rounded-xl w-full max-w-md shadow-lg" />
+        </div>
+        <!-- Upload picture -->
+        <div class="mt-8 bg-gray-900 rounded-2xl p-6 max-w-xl">
+          <h3 class="text-sm font-semibold text-gray-300 mb-3">Upload Picture</h3>
+          <div class="flex gap-3">
+            <input type="file" id="img-upload-file" accept="image/*" class="flex-1 text-xs text-gray-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-gray-800 file:text-white" />
+            <button id="btn-upload-picture" class="bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold py-2 px-4 rounded-lg transition">Upload</button>
+          </div>
+          <div id="upload-status" class="hidden text-sm text-red-400 mt-2"></div>
+        </div>
+
+        <!-- Task pool -->
+        <div id="image-task-pool" class="mt-4 text-xs text-gray-500"></div>
+
+        <!-- Picture artifacts -->
+        <div class="mt-8">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-300">My Pictures</h3>
+            <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+              <input type="checkbox" id="img-artifacts-hide-failures" class="accent-violet-500" />
+              Hide failures
+            </label>
+          </div>
+          <div id="img-artifacts-loading" class="text-gray-500 text-xs">Loading…</div>
+          <div id="img-artifacts-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+          <button id="btn-img-artifacts-more" class="hidden mt-4 w-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white py-2 rounded-xl text-sm transition">Load more</button>
+        </div>
+      </section>
+
+      <!-- ── MAKE VIDEO TAB ──────────────────────────────────────────────────── -->
+      <section id="tab-make-video" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="make-video">ⓘ</button></div>
+        <div class="max-w-xl space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Prompt</label>
+            <textarea id="video-prompt" rows="3" placeholder="a glowing orb floating through space…"
+              class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Model Series</label>
+            <select id="video-model" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500">
+              <option value="volc_seedance_fast_i2v_upscale">volc_seedance_fast_i2v_upscale</option>
+              <option value="cogvideox-2-speed">cogvideox-2-speed</option>
+              <option value="cogvideox-3-speed">cogvideox-3-speed</option>
+            </select>
+          </div>
+          <button id="btn-make-video" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-xl transition">Generate Video</button>
+          <div id="video-status" class="hidden text-sm text-red-400"></div>
+          <div id="video-spinner" class="hidden flex items-center gap-3 text-sm text-gray-400">
+            <svg class="animate-spin h-5 w-5 text-violet-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+            <span id="video-spinner-text">Generating…</span>
+          </div>
+          <video id="video-result" controls class="hidden mt-4 rounded-xl w-full max-w-md shadow-lg"></video>
+        </div>
+        <!-- Task pool -->
+        <div id="video-task-pool" class="mt-4 text-xs text-gray-500"></div>
+
+        <!-- Video artifacts -->
+        <div class="mt-8">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-300">My Videos</h3>
+            <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+              <input type="checkbox" id="video-artifacts-hide-failures" class="accent-violet-500" />
+              Hide failures
+            </label>
+          </div>
+          <div id="video-artifacts-loading" class="text-gray-500 text-xs">Loading…</div>
+          <div id="video-artifacts-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+          <button id="btn-video-artifacts-more" class="hidden mt-4 w-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white py-2 rounded-xl text-sm transition">Load more</button>
+        </div>
+      </section>
+
+      <!-- ── MAKE SONG TAB ───────────────────────────────────────────────────── -->
+      <section id="tab-make-song" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="make-song">ⓘ</button></div>
+        <div class="max-w-xl space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Prompt (style, >= 10 chars)</label>
+            <input id="song-prompt" type="text" placeholder="upbeat electronic dance track"
+              class="w-full bg-gray-900 border border-gray-700 rounded-xl px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Lyrics (>= 10 chars)</label>
+            <textarea id="song-lyrics" rows="4" placeholder="Enter lyrics here…"
+              class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+          </div>
+          <button id="btn-make-song" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-6 rounded-xl transition">Generate Song</button>
+          <div id="song-status" class="hidden text-sm text-red-400"></div>
+          <div id="song-spinner" class="hidden flex items-center gap-3 text-sm text-gray-400">
+            <svg class="animate-spin h-5 w-5 text-violet-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+            <span id="song-spinner-text">Generating…</span>
+          </div>
+          <audio id="song-result" controls class="hidden mt-4 w-full max-w-md"></audio>
+        </div>
+        <!-- Task pool -->
+        <div id="audio-task-pool" class="mt-4 text-xs text-gray-500"></div>
+
+        <!-- Audio artifacts -->
+        <div class="mt-8">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-300">My Audio</h3>
+            <label class="flex items-center gap-2 text-xs text-gray-400 cursor-pointer">
+              <input type="checkbox" id="audio-artifacts-hide-failures" class="accent-violet-500" />
+              Hide failures
+            </label>
+          </div>
+          <div id="audio-artifacts-loading" class="text-gray-500 text-xs">Loading…</div>
+          <div id="audio-artifacts-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+          <button id="btn-audio-artifacts-more" class="hidden mt-4 w-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white py-2 rounded-xl text-sm transition">Load more</button>
+        </div>
+      </section>
+
+      <!-- ── TRAVEL CAMPAIGN TAB ─────────────────────────────────────────────── -->
+      <section id="tab-travel-campaign" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="travel-campaign">ⓘ</button></div>
+        <div class="space-y-6">
+          <div class="bg-gray-900 rounded-2xl p-6 max-w-xl">
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">Create Campaign</h3>
+            <div class="space-y-3">
+              <input id="camp-name" type="text" placeholder="Campaign name" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <input id="camp-subtitle" type="text" placeholder="Subtitle" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <textarea id="camp-plot" rows="3" placeholder="Mission plot…" class="w-full bg-gray-950 border border-gray-700 rounded-lg p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+              <input id="camp-header-img" type="text" placeholder="Cover image URL (optional)" class="w-full bg-gray-950 border border-gray-700 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500" />
+              <button id="btn-create-campaign" class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 text-white font-semibold py-2 px-6 rounded-xl transition text-sm">Create</button>
+              <div id="camp-status" class="hidden text-sm text-red-400"></div>
+            </div>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-gray-300 mb-3">My Campaigns</h3>
+            <div id="campaigns-loading" class="text-gray-500 text-xs">Loading…</div>
+            <div id="campaigns-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── LLM CHAT TAB ────────────────────────────────────────────────────── -->
+      <section id="tab-llm" class="hidden">
+        <div class="flex justify-end mb-2"><button class="tab-info-btn text-gray-500 hover:text-white text-xs" data-tab="llm">&#9432;</button></div>
+        <div class="max-w-xl space-y-4">
+          <div class="flex items-center justify-between">
+            <label class="block text-sm font-medium text-gray-300">Model</label>
+            <select id="llm-model" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-violet-500">
+              <option value="bailian/glm-5">bailian/glm-5</option>
+              <option value="bailian/qwen3.6-plus">bailian/qwen3.6-plus</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">System Prompt</label>
+            <textarea id="llm-system" rows="2" placeholder="Optional system instructions…"
+              class="w-full bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+          </div>
+          <button id="btn-llm-clear" class="text-xs text-gray-500 hover:text-white transition">Clear conversation</button>
+          <!-- Messages -->
+          <div id="llm-messages" class="space-y-3 max-h-[400px] overflow-y-auto pr-1"></div>
+          <!-- Input -->
+          <div class="flex gap-2">
+            <textarea id="llm-prompt" rows="2" placeholder="Type a message…"
+              class="flex-1 bg-gray-900 border border-gray-700 rounded-xl p-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-violet-500 resize-none"></textarea>
+            <button id="btn-llm-send"
+              class="bg-violet-600 hover:bg-violet-500 active:bg-violet-700 disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white font-semibold py-2 px-4 rounded-xl transition self-end">
+              Send
+            </button>
+          </div>
+          <div id="llm-status" class="hidden text-sm text-red-400"></div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ── TAB INFO MODAL ─────────────────────────────────────────────────────── -->
+  <div id="tab-info-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div class="bg-gray-900 rounded-2xl max-w-md w-full mx-4 shadow-2xl border border-gray-800">
+      <div class="p-6 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 id="tab-info-title" class="text-sm font-semibold text-gray-200">API Info</h3>
+          <button id="btn-close-tab-info" class="text-gray-500 hover:text-white transition">✕</button>
+        </div>
+        <div id="tab-info-content" class="text-xs text-gray-400 space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ARTIFACT DETAIL MODAL ──────────────────────────────────────────────── -->
+  <div id="artifact-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div class="bg-gray-900 rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-800">
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-200">Artifact Detail</h3>
+          <button id="btn-close-artifact-modal" class="text-gray-500 hover:text-white transition">✕</button>
+        </div>
+        <div id="artifact-modal-media" class="rounded-xl overflow-hidden bg-gray-800"></div>
+        <div id="artifact-modal-fields" class="space-y-2 text-sm"></div>
+        <pre id="artifact-modal-raw" class="text-xs text-gray-400 bg-gray-950 rounded-lg p-3 overflow-auto max-h-48"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ENTITY DETAIL / EDIT MODAL ─────────────────────────────────────────── -->
+  <div id="entity-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div class="bg-gray-900 rounded-2xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto shadow-2xl border border-gray-800">
+      <div class="p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 id="entity-modal-title" class="text-sm font-semibold text-gray-200">Detail</h3>
+          <button id="btn-close-entity-modal" class="text-gray-500 hover:text-white transition">✕</button>
+        </div>
+        <div id="entity-modal-content" class="space-y-3 text-sm"></div>
+        <div id="entity-modal-edit-form" class="hidden space-y-3"></div>
+        <div class="flex gap-2">
+          <button id="btn-entity-edit" class="bg-gray-800 hover:bg-gray-700 text-white text-xs py-2 px-4 rounded-lg transition">Edit</button>
+          <button id="btn-entity-save" class="hidden bg-violet-600 hover:bg-violet-500 text-white text-xs py-2 px-4 rounded-lg transition">Save</button>
+          <button id="btn-entity-cancel" class="hidden bg-gray-700 hover:bg-gray-600 text-white text-xs py-2 px-4 rounded-lg transition">Cancel</button>
+        </div>
+        <div id="entity-modal-status" class="hidden text-xs text-red-400"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>

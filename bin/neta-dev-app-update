@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app update — PATCH /v1/developer/apps/{uuid}
+#
+# Usage:
+#   neta-dev-app update <uuid> [options]
+#
+# Options (all optional — PATCH semantics):
+#   --name <name>            New app name
+#   --description <text>     New description
+#   --scopes <scopes>        Comma-separated scopes (full replace)
+#   --redirect-uri <uri>     New redirect URI
+#   --display-name <name>    Brand display name
+#   --logo-url <url>         Brand logo URL
+#   --dark-logo-url <url>    Brand dark-mode logo URL
+#   --terms-url <url>        Terms of use URL
+#   --privacy-url <url>      Privacy policy URL
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/neta-dev-lib.sh"
+
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+    exit 0
+fi
+
+UUID="${1:-}"
+shift || true
+
+[[ -n "$UUID" ]] || die "uuid is required. Usage: neta-dev-app update <uuid> [options]"
+
+# parse args
+NAME=""
+DESCRIPTION=""
+SCOPES=""
+REDIRECT_URI=""
+DISPLAY_NAME=""
+LOGO_URL=""
+DARK_LOGO_URL=""
+TERMS_URL=""
+PRIVACY_URL=""
+HAS_FIELD=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --name) NAME="$2"; HAS_FIELD=true; shift 2 ;;
+        --description) DESCRIPTION="$2"; HAS_FIELD=true; shift 2 ;;
+        --scopes) SCOPES="$2"; HAS_FIELD=true; shift 2 ;;
+        --redirect-uri) REDIRECT_URI="$2"; HAS_FIELD=true; shift 2 ;;
+        --display-name) DISPLAY_NAME="$2"; HAS_FIELD=true; shift 2 ;;
+        --logo-url) LOGO_URL="$2"; HAS_FIELD=true; shift 2 ;;
+        --dark-logo-url) DARK_LOGO_URL="$2"; HAS_FIELD=true; shift 2 ;;
+        --terms-url) TERMS_URL="$2"; HAS_FIELD=true; shift 2 ;;
+        --privacy-url) PRIVACY_URL="$2"; HAS_FIELD=true; shift 2 ;;
+        --help|-h)
+            sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+            exit 0
+            ;;
+        *) die "unknown flag: $1" ;;
+    esac
+done
+
+require_env DEV_TOKEN
+
+[[ "$HAS_FIELD" == true ]] || die "at least one field to update is required"
+
+if [[ -n "$SCOPES" ]]; then
+    validate_scopes "$SCOPES"
+fi
+
+# build JSON payload dynamically
+BODY="{}"
+
+add_field() {
+    local key="$1"
+    local val="$2"
+    BODY=$(echo "$BODY" | jq --arg k "$key" --arg v "$val" '. + {($k): $v}')
+}
+
+add_json_field() {
+    local key="$1"
+    local val="$2"
+    BODY=$(echo "$BODY" | jq --arg k "$key" --argjson v "$val" '. + {($k): $v}')
+}
+
+[[ -n "$NAME" ]]           && add_field name "$NAME"
+[[ -n "$DESCRIPTION" ]]    && add_field description "$DESCRIPTION"
+[[ -n "$SCOPES" ]]         && add_json_field scopes "$(echo "$SCOPES" | tr ',' '\n' | jq -R . | jq -s .)"
+[[ -n "$REDIRECT_URI" ]]   && add_json_field redirect_uris "[\"$REDIRECT_URI\"]"
+
+# brand_config
+if [[ -n "$DISPLAY_NAME" || -n "$LOGO_URL" || -n "$DARK_LOGO_URL" || -n "$TERMS_URL" || -n "$PRIVACY_URL" ]]; then
+    BRAND_CONFIG="{}"
+    [[ -n "$DISPLAY_NAME" ]]  && BRAND_CONFIG=$(echo "$BRAND_CONFIG" | jq --arg v "$DISPLAY_NAME" '. + {display_name: $v}')
+    [[ -n "$LOGO_URL" ]]      && BRAND_CONFIG=$(echo "$BRAND_CONFIG" | jq --arg v "$LOGO_URL" '. + {logo_url: $v}')
+    [[ -n "$DARK_LOGO_URL" ]] && BRAND_CONFIG=$(echo "$BRAND_CONFIG" | jq --arg v "$DARK_LOGO_URL" '. + {dark_logo_url: $v}')
+    [[ -n "$TERMS_URL" ]]     && BRAND_CONFIG=$(echo "$BRAND_CONFIG" | jq --arg v "$TERMS_URL" '. + {terms_of_use_url: $v}')
+    [[ -n "$PRIVACY_URL" ]]   && BRAND_CONFIG=$(echo "$BRAND_CONFIG" | jq --arg v "$PRIVACY_URL" '. + {privacy_policy_url: $v}')
+    BODY=$(echo "$BODY" | jq --argjson v "$BRAND_CONFIG" '. + {brand_config: $v}')
+fi
+
+echo "Updating app $UUID..."
+RESPONSE=$(api_call PATCH "/v1/developer/apps/$UUID" "$BODY")
+echo "$RESPONSE" | pp_json

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app list — GET /v1/developer/apps
+#
+# Usage:
+#   neta-dev-app list [--page-index <n>] [--page-size <n>]
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/neta-dev-lib.sh"
+
+PAGE_INDEX=0
+PAGE_SIZE=20
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --page-index) PAGE_INDEX="$2"; shift 2 ;;
+        --page-size) PAGE_SIZE="$2"; shift 2 ;;
+        --help|-h)
+            sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+            exit 0
+            ;;
+        *) die "unknown flag: $1" ;;
+    esac
+done
+
+require_env DEV_TOKEN
+
+RESPONSE=$(api_call GET "/v1/developer/apps?page_index=${PAGE_INDEX}&page_size=${PAGE_SIZE}")
+
+TOTAL=$(echo "$RESPONSE" | json_str '.total')
+echo "Total apps: $TOTAL (page $PAGE_INDEX, size $PAGE_SIZE)"
+echo ""
+
+if [[ "$TOTAL" -eq 0 ]]; then
+    echo "No apps found."
+    exit 0
+fi
+
+# print table header
+printf "%-36s  %-24s  %-10s  %s\n" "UUID" "CLIENT_ID" "STATUS" "SCOPES"
+printf "%s\n" "----------------------------------------------------------------------------------------------------"
+
+# print rows
+echo "$RESPONSE" | jq -r '.items[] | [
+    .uuid,
+    .logto_app_id,
+    .status,
+    (.scopes | join(","))
+] | @tsv' | while IFS=$'\t' read -r uuid client_id status scopes; do
+    printf "%-36s  %-24s  %-10s  %s\n" "$uuid" "$client_id" "$status" "$scopes"
+done

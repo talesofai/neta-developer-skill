@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app create — POST /v1/developer/apps
+#
+# Usage:
+#   neta-dev-app create --name <name> --scopes <scopes> --redirect-uri <uri> [options]
+#
+# Required flags:
+#   --name <name>            App name (max 256 chars)
+#   --scopes <scopes>        Comma-separated scopes, e.g. user:read,asset:read,generate
+#   --redirect-uri <uri>     Exactly one redirect URI
+#
+# Optional flags:
+#   --description <text>     App description (max 1024 chars)
+#   --display-name <name>    Brand display name
+#   --logo-url <url>         Brand logo URL
+#   --dark-logo-url <url>    Brand dark-mode logo URL
+#   --terms-url <url>        Terms of use URL
+#   --privacy-url <url>      Privacy policy URL
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/neta-dev-lib.sh"
+
+# parse args
+NAME=""
+DESCRIPTION=""
+SCOPES=""
+REDIRECT_URI=""
+DISPLAY_NAME=""
+LOGO_URL=""
+DARK_LOGO_URL=""
+TERMS_URL=""
+PRIVACY_URL=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --name) NAME="$2"; shift 2 ;;
+        --description) DESCRIPTION="$2"; shift 2 ;;
+        --scopes) SCOPES="$2"; shift 2 ;;
+        --redirect-uri) REDIRECT_URI="$2"; shift 2 ;;
+        --display-name) DISPLAY_NAME="$2"; shift 2 ;;
+        --logo-url) LOGO_URL="$2"; shift 2 ;;
+        --dark-logo-url) DARK_LOGO_URL="$2"; shift 2 ;;
+        --terms-url) TERMS_URL="$2"; shift 2 ;;
+        --privacy-url) PRIVACY_URL="$2"; shift 2 ;;
+        --help|-h)
+            sed -n '/^# Usage:/,/^# Optional flags:/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+            exit 0
+            ;;
+        *) die "unknown flag: $1" ;;
+    esac
+done
+
+require_env DEV_TOKEN
+
+[[ -n "$NAME" ]] || die "--name is required"
+[[ -n "$SCOPES" ]] || die "--scopes is required"
+[[ -n "$REDIRECT_URI" ]] || die "--redirect-uri is required"
+
+validate_scopes "$SCOPES"
+
+# build JSON payload
+jq -n \
+    --arg name "$NAME" \
+    --argjson scopes "$(echo "$SCOPES" | tr ',' '\n' | jq -R . | jq -s .)" \
+    --argjson redirect_uris "[\"$REDIRECT_URI\"]" \
+    --arg description "$DESCRIPTION" \
+    --arg display_name "$DISPLAY_NAME" \
+    --arg logo_url "$LOGO_URL" \
+    --arg dark_logo_url "$DARK_LOGO_URL" \
+    --arg terms_of_use_url "$TERMS_URL" \
+    --arg privacy_policy_url "$PRIVACY_URL" \
+    '{
+        name: $name,
+        scopes: $scopes,
+        redirect_uris: $redirect_uris,
+        description: (if $description == "" then null else $description end),
+        brand_config: (if ($display_name == "" and $logo_url == "" and $dark_logo_url == "" and $terms_of_use_url == "" and $privacy_policy_url == "") then null else {
+            display_name: (if $display_name == "" then null else $display_name end),
+            logo_url: (if $logo_url == "" then null else $logo_url end),
+            dark_logo_url: (if $dark_logo_url == "" then null else $dark_logo_url end),
+            terms_of_use_url: (if $terms_of_use_url == "" then null else $terms_of_use_url end),
+            privacy_policy_url: (if $privacy_policy_url == "" then null else $privacy_policy_url end)
+        } end)
+    }' > /dev/null || die "failed to build JSON payload"
+
+BODY=$(jq -n \
+    --arg name "$NAME" \
+    --argjson scopes "$(echo "$SCOPES" | tr ',' '\n' | jq -R . | jq -s .)" \
+    --argjson redirect_uris "[\"$REDIRECT_URI\"]" \
+    --arg description "$DESCRIPTION" \
+    --arg display_name "$DISPLAY_NAME" \
+    --arg logo_url "$LOGO_URL" \
+    --arg dark_logo_url "$DARK_LOGO_URL" \
+    --arg terms_of_use_url "$TERMS_URL" \
+    --arg privacy_policy_url "$PRIVACY_URL" \
+    '{
+        name: $name,
+        scopes: $scopes,
+        redirect_uris: $redirect_uris,
+        description: (if $description == "" then null else $description end),
+        brand_config: (if ($display_name == "" and $logo_url == "" and $dark_logo_url == "" and $terms_of_use_url == "" and $privacy_policy_url == "") then null else {
+            display_name: (if $display_name == "" then null else $display_name end),
+            logo_url: (if $logo_url == "" then null else $logo_url end),
+            dark_logo_url: (if $dark_logo_url == "" then null else $dark_logo_url end),
+            terms_of_use_url: (if $terms_of_use_url == "" then null else $terms_of_use_url end),
+            privacy_policy_url: (if $privacy_policy_url == "" then null else $privacy_policy_url end)
+        } end)
+    }')
+
+echo "Creating app..."
+RESPONSE=$(api_call POST "/v1/developer/apps" "$BODY")
+
+echo "$RESPONSE" | pp_json
+
+echo ""
+echo "Save these values:"
+echo "  uuid:        $(echo "$RESPONSE" | json_str '.uuid')"
+echo "  client_id:   $(echo "$RESPONSE" | json_str '.logto_app_id')"

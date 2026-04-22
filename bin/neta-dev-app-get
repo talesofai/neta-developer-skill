@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app get — GET /v1/developer/apps/{uuid}
+#
+# Usage:
+#   neta-dev-app get <uuid>
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/lib/neta-dev-lib.sh"
+
+UUID="${1:-}"
+
+if [[ "$UUID" == "--help" || "$UUID" == "-h" ]]; then
+    sed -n '/^# Usage:/,/^#$/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+    exit 0
+fi
+
+require_env DEV_TOKEN
+
+if [[ -z "$UUID" ]]; then
+    die "uuid is required. Usage: neta-dev-app get <uuid>"
+fi
+
+RESPONSE=$(api_call GET "/v1/developer/apps/$UUID")
+echo "$RESPONSE" | pp_json

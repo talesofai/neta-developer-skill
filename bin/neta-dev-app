@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+#
+# neta-dev-app — CLI for managing Neta Open Platform developer apps.
+#
+# Usage:
+#   neta-dev-app <command> [options]
+#
+# Commands:
+#   create    Create a new developer app
+#   list      List your developer apps
+#   get       Show details for a specific app
+#   update    Update an existing app
+#   delete    Delete (soft-delete) an app
+#
+# Environment:
+#   BASE_URL   API base URL (default: https://api.talesofai.com)
+#   DEV_TOKEN  Bearer token — first-party token from DevTools, or portal-issued token
+#
+# Examples:
+#   export BASE_URL=https://api.talesofai.com
+#   export DEV_TOKEN=<your_token>
+#
+#   neta-dev-app create --name "My App" --scopes user:read,asset:read --redirect-uri http://localhost:9999/
+#   neta-dev-app list
+#   neta-dev-app get <uuid>
+#   neta-dev-app update <uuid> --description "Updated"
+#   neta-dev-app delete <uuid>
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+usage() {
+    sed -n '/^# Usage:/,/^# Examples:/p' "$0" | sed 's/^# //' | sed 's/^#$/\n/'
+}
+
+case "${1:-}" in
+    create|list|get|update|delete)
+        cmd="$1"
+        shift
+        exec "$SCRIPT_DIR/neta-dev-app-$cmd" "$@"
+        ;;
+    --help|-h)
+        usage
+        exit 0
+        ;;
+    --version|-v)
+        echo "neta-dev-app 0.1.0"
+        exit 0
+        ;;
+    *)
+        echo "error: unknown command '${1:-}'" >&2
+        echo "Run 'neta-dev-app --help' for usage." >&2
+        exit 1
+        ;;
+esac
