@@ -74,11 +74,13 @@ python3 -m http.server 9999
 
 Zero-dependency vanilla JS covering all five scopes across 8 tabs. See `assets/demo-spa/README.md` for architecture, security model, and production hardening.
 
+The demo is a reference starting point. For more ambitious projects, adapt it to any language or framework — TypeScript, React, Vue, or your preferred stack. All auth and API logic is framework-agnostic.
+
 ## Security
 
 - **No BFF**: Tokens live in `sessionStorage` only. SPA owners are responsible for securing their deployment. See demo README for XSS prevention patterns.
 - **CSP**: Update the `<meta>` tag in `index.html` when adding new hosts. See demo README for the CSP reference table.
-- **Redirect URI**: Exactly 1 URI. `http://` only for `localhost`. See `references/developer-app-crud.md` for the full rules table.
+- **Redirect URI**: Exactly 1 URI. `http://localhost:*`, `https://*.talesofai.com`, or `https://*.cohub.run`. See `references/developer-app-crud.md` for the full rules table.
 - **Logout**: Client-side only (`sessionStorage.clear()` + reload). Tokens are not revoked at the OAuth service.
 
 ## Adding API calls

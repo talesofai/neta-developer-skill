@@ -73,13 +73,12 @@ neta-dev-app delete <uuid> --force   # skip confirmation
 | Rule | Detail |
 |------|--------|
 | Count | Exactly 1 URI |
-| Scheme | `http` or `https` only |
-| HTTP | Only for `localhost` |
-| HTTPS domains | `*.talesofai.com`, `*.cohub.run` whitelisted |
-| Bare IPs | Blocked |
-| Custom schemes | Blocked |
+| `http://localhost:*` | Any port, any path |
+| `https://*.talesofai.com` | Any subdomain |
+| `https://*.cohub.run` | Any subdomain |
+| Other schemes / domains | Blocked |
 
-Valid: `http://localhost:9999/`, `https://myapp.talesofai.com/callback`
+Valid: `http://localhost:9999/`, `http://localhost:3000/callback`, `https://myapp.talesofai.com/callback`, `https://myapp.cohub.run/`
 
 Invalid: `http://example.com/callback`, `https://192.168.1.1/callback`, `myapp://callback`
 

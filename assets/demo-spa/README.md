@@ -1,6 +1,6 @@
 # Neta Open Platform — Demo SPA
 
-A minimal, zero-dependency single-page app demonstrating all five Neta Open Platform scopes across 8 tabs. Copy this directory to start your own project — no npm, no build step.
+A minimal, zero-dependency single-page app demonstrating all five Neta Open Platform scopes across 8 tabs. Copy this directory to start your own project — no npm, no build step. The pure-JS code is a reference implementation; adapt it to TypeScript, React, Vue, or any framework as your project grows.
 
 The Neta backend project name is TalesofAI, which appears in API domain names (`api.talesofai.com`, `litellm.talesofai.com`, `oss.talesofai.com`). The platform is called **Neta Open Platform**.
 
@@ -47,8 +47,8 @@ Edit `config.js` — replace `YOUR_CLIENT_ID` with your CLIENT ID.
 
 ### 3. Set the redirect URI
 
-- **Local development**: `http://localhost:9999/` works as-is
-- **Deployed**: Use your cohub public link as the redirect URI. When you ask the cohub AI agent to publish your project, it copies your frontend artifacts to a public URL — use that URL as your redirect URI
+- **Local development**: Set your app's redirect URI to `http://localhost:9999/` (or any localhost port you prefer). `http://localhost:*` works for any port and path.
+- **Deployed**: Once your app is complete, ask the cohub AI agent to publish it — cohub copies your frontend artifacts to a public URL. Then update your redirect URI to that link via the [developer portal](https://www.neta.art/open/) or `PATCH /v1/developer/apps/{uuid}`.
 
 ### 4. Serve
 
