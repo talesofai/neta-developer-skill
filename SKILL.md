@@ -22,7 +22,7 @@ Neta is operated by **Viscept Limited**.
 
 To become a Neta developer, contact staff via Discord: `https://discord.com/channels/1196028153085296651/1497137199001501768`
 
-Once granted developer privilege, you receive a **DEV_TOKEN** (scopes: `user:read`, `develop`). This token is used only for managing your developer apps — create, list, update, delete — via the CLI toolkit or direct API calls.
+Once granted developer privilege, you receive a **DEV_TOKEN** (scopes: `user:read`, `develop`, `asset:read`, `asset:write`, `generate`, `llm`). This token is issued by the Neta Developer Portal and provides full access to all platform APIs. You can use it to manage your developer apps (create, list, update, delete) via the CLI toolkit, or to call any platform API directly.
 
 Your SPA issues its own tokens to end users with the scopes you registered for your app: `user:read`, `asset:read`, `asset:write`, `generate`, `llm`. SPA access tokens expire after **1 hour**; a refresh token is included. Your client code is responsible for refreshing proactively to maintain a smooth user experience.
 
