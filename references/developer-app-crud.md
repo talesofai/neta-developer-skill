@@ -13,7 +13,7 @@ export BASE_URL="https://api.talesofai.com"   # optional; default
 export DEV_TOKEN="<your_token>"
 ```
 
-**DEV_TOKEN** is your developer access token (scopes: `user:read`, `develop`). See `SKILL.md` for how to obtain one. The easiest path: sign in to the [Neta Developer Portal](https://www.neta.art/open/) and copy it from your dashboard.
+**DEV_TOKEN** is your developer access token (scopes: `user:read`, `develop`, `asset:read`, `asset:write`, `generate`, `llm`). See `SKILL.md` for how to obtain one. The easiest path: sign in to the [Neta Developer Portal](https://www.neta.art/open/) and copy it from your dashboard.
 
 ---
 
