@@ -1,6 +1,8 @@
 ---
 name: neta-developer
-description: "Neta Open Platform developer assistant. Help users build single-page applications on the Neta Open Platform. Use when the user is: (1) registering or managing a developer app, (2) implementing OAuth2 PKCE authentication against the Neta OAuth service, (3) calling open platform APIs (user:read, asset:read, asset:write, generate, llm), (4) building or extending a demo SPA, (5) understanding Neta's API scopes and endpoint mapping, (6) translating Neta capabilities into their own frontend application."
+description: Help developers build single-page applications on the Neta Open Platform. Covers OAuth2 PKCE, API integration, and SPA architecture.
+when_to_use: Use when the user registers a developer app, implements Neta authentication, calls platform APIs, or extends the demo SPA.
+allowed-tools: Read
 ---
 
 # Neta Developer Skill
