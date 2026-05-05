@@ -17,6 +17,34 @@ This repo is both an **AI coding agent skill** and a **project template**:
 
 ---
 
+## Install as a skill
+
+### Via `npx skills` (recommended)
+
+The fastest way to install this skill into your AI coding agent:
+
+```bash
+# Install globally for Claude Code
+npx skills add talesofai/neta-developer-skill -g -a claude-code -y
+
+# Or install to the current project only
+npx skills add talesofai/neta-developer-skill -a claude-code -y
+```
+
+Supports Claude Code, Codex, Cursor, OpenCode, and [50+ agents](https://www.npmjs.com/package/skills).
+
+### Via git clone
+
+```bash
+# Global (all projects)
+git clone https://github.com/talesofai/neta-developer-skill.git ~/.claude/skills/neta-developer-skill
+
+# Project-level (current project only)
+git clone https://github.com/talesofai/neta-developer-skill.git .claude/skills/neta-developer-skill
+```
+
+---
+
 ## Quick start
 
 ```bash
